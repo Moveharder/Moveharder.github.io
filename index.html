@@ -29,7 +29,7 @@
     <button id="downloadButton">下载视频</button>
 
     <script type="module">
-      import { ACRecorder } from "../dist/esm/index.js";
+      import { ACRecorder } from "./index.js";
       let ACR = new ACRecorder(document.querySelector("#audio"), "#canvas");
       ACR.setListeners({
         start: () => {
