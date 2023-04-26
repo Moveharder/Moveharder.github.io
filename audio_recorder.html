@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <audio src="./viper.mp3" id="audio" controls></audio>
+    <button onclick="play()">play</button>
+
+    <script>
+      function play() {
+        const audio = document.querySelector("#audio");
+        const audioContext = new AudioContext();
+        audio
+          .play()
+          .then(() => {
+            const sourceNode = audioContext.createMediaElementSource(audio);
+            sourceNode.connect(audioContext.destination);
+
+            const mediaStreamDestination =
+              audioContext.createMediaStreamDestination();
+            sourceNode.connect(mediaStreamDestination);
+
+            const mediaRecorder = new MediaRecorder(
+              mediaStreamDestination.stream
+            );
+            const audioChunks = [];
+
+            mediaRecorder.addEventListener("dataavailable", (event) => {
+              audioChunks.push(event.data);
+            });
+
+            mediaRecorder.addEventListener("stop", () => {
+              const audioBlob = new Blob(audioChunks, { type: "audio/mp3" });
+              const audioUrl = URL.createObjectURL(audioBlob);
+              const recordedAudio = document.createElement("audio");
+              recordedAudio.controls = true;
+              recordedAudio.src = audioUrl;
+              document.body.appendChild(recordedAudio);
+
+              // 如果需要将录制的音频保存到本地，可以使用FileSaver.js库来实现
+              // saveAs(audioBlob, 'recorded-audio.mp3');
+            });
+
+            mediaRecorder.start();
+            setTimeout(() => mediaRecorder.stop(), 5000); // 录制5秒钟
+          })
+          .catch((error) => {
+            console.error(error);
+          });
+      }
+    </script>
+  </body>
+</html>
