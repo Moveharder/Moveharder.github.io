@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0,viewport-fit=cover"
+    />
+    <title>Web Speech API语音识别示例</title>
+  </head>
+  <body>
+    <a
+      href="https://developer.mozilla.org/zh-CN/docs/Web/API/Web_Speech_API/Using_the_Web_Speech_API"
+      target="_blank"
+      >MDN Demo</a
+    >
+    <a
+      href="https://developer.mozilla.org/en-US/docs/Web/API/SpeechRecognitionErrorEvent/error"
+      target="_blank"
+      >错误类型</a
+    >
+    <h1>Web Speech API语音识别示例</h1>
+    <p>声音列表</p>
+    <select id="voices" onchange="setLang(event)"></select>
+
+    <h4># 声音识别（STT）</h4>
+    <p>按下“语音识别”按钮开始语音识别；停顿2s后说“结束”，停止识别。</p>
+    <button id="start-btn" onclick="startListen()">语音识别</button>
+    <button onclick="stopListen()">结束</button>
+    <div id="result"></div>
+    <hr />
+    <br />
+    <h4># 声音合成（TTS）</h4>
+    <textarea id="textContent" cols="30" rows="10">
+你好～现在可以办理小鸭月卡，原价199元，现特价169元起，可跨店通用哦。 开通方法：小程序中“我的”界面中进行开通哦～</textarea
+    >
+    <br />
+    <button id="start-btn" onclick="makeTTS()">语音合成</button>
+    <hr />
+    <div id="log"></div>
+
+    <script>
+      let logEl = document.querySelector("#log");
+      let voicesEl = document.querySelector("#voices");
+      let textContentEl = document.querySelector("#textContent");
+
+      let lang = "zh-CN";
+      let result = "";
+
+      // 获取语音识别对象
+      const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+      //   const SpeechGrammarList =
+      //     window.SpeechGrammarList || window.webkitSpeechGrammarList; //Safari不支持
+
+      let recognition = null;
+      let speechRecognitionList = null;
+
+      let synth = window.speechSynthesis;
+      let utterance = new window.SpeechSynthesisUtterance();
+
+      setTimeout(() => {
+        listVoices();
+      }, 1000);
+
+      try {
+        recognition = new SpeechRecognition();
+      } catch (err) {
+        alert(JSON.stringify(err, "\t", 2));
+      }
+
+      recognition.continuous = true; // 连续识别，直到 stop() 被调用
+      recognition.interimResults = true; // 是否展示临时结果（实时展示）
+      // recognition.maxAlternatives = 1;
+
+      // 监听语音识别结果
+      recognition.addEventListener("result", (event) => {
+        console.log("event.results:", event.results);
+        var last = event.results.length - 1;
+        result = event.results[last][0].transcript;
+        console.log(result);
+
+        if (result == "结束") {
+          recognition.stop();
+          return;
+        }
+
+        document.querySelector("#result").textContent = `${result}`;
+        makeTTS(result);
+      });
+
+      recognition.onspeechend = function () {
+        console.log("onspeechend");
+        recognition.stop();
+      };
+
+      recognition.onerror = function (event) {
+        logEl.innerHTML = `❌Error occurred in recognition: <br/>[Type] ${event.error}. <br/>[Message] ${event.message}.`;
+      };
+
+      function startListen() {
+        // 设置识别语言
+        recognition.lang = lang;
+        // 开始语音识别
+        try {
+          recognition.start();
+        } catch (err) {
+          alert(JSON.stringify(err, "\t", 2));
+        }
+      }
+
+      function stopListen() {
+        recognition.stop();
+      }
+
+      function makeTTS(text) {
+        utterance.text = text || textContentEl.value;
+        utterance.rate = 1; //0.1~10
+        utterance.pitch = 1; //0~2
+        utterance.lang = lang;
+        // utterance.voiceURI = "Tingting";
+
+        // utterance.lang = 'zh-TW'
+        // utterance.voiceURI = "美嘉";
+
+        // utterance.lang = "zh-HK";
+        // utterance.voiceURI = "Google 粤語（香港）";
+
+        synth.speak(utterance);
+      }
+
+      function listVoices() {
+        let voices = synth.getVoices();
+        let zhVoices = voices.filter((item) => item.lang.includes("zh-"));
+        let elseVoices = voices.filter((item) => !item.lang.includes("zh-"));
+        let allVoices = [...zhVoices, ...elseVoices];
+
+        let options = document.createDocumentFragment();
+        allVoices.map((item) => {
+          let option = document.createElement("option");
+          option.value = item.lang;
+          option.innerText = `${item.lang} ${item.name}`;
+          options.appendChild(option);
+        });
+        voicesEl.appendChild(options);
+      }
+
+      function setLang(e) {
+        lang = e.target.value;
+      }
+    </script>
+  </body>
+</html>
