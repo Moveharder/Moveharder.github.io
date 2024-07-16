@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <script src="./threejs.js"></script>
+    <script src="./OrbitControls.js"></script>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+      }
+      #mapcanvas {
+        border: solid white 4px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 100;
+      }
+    </style>
+  </head>
+  <body>
+    <script>
+      // 创建一个渲染器
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+
+      // 创建一个场景
+      const scene = new THREE.Scene();
+
+      // 创建小地图背景平面
+      var mapGeometry = new THREE.PlaneGeometry(100, 100);
+      var mapMaterial = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        map: new THREE.TextureLoader().load("./mini_map_1241_colorful.png"),
+        side: THREE.DoubleSide,
+      });
+      var mapMesh = new THREE.Mesh(mapGeometry, mapMaterial);
+      mapMesh.rotation.x = -Math.PI / 2;
+      mapMesh.position.y = -0.1;
+      scene.add(mapMesh);
+
+      // 创建一个正方体作为场景中的对象
+      const geometry = new THREE.BoxGeometry(1, 1, 1);
+      const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+      const mesh = new THREE.Mesh(geometry, material);
+      scene.add(mesh);
+
+      // 创建一个平行投影相机
+      const miniMapSize = 50;
+      const camera = new THREE.OrthographicCamera(
+        -miniMapSize / 2,
+        miniMapSize / 2,
+        miniMapSize / 2,
+        -miniMapSize / 2,
+        1,
+        1000
+      );
+      camera.position.z = 10;
+
+      // 创建一个2D平面
+      const mapCanvas = document.createElement("canvas");
+      mapCanvas.width = 200;
+      mapCanvas.height = 200;
+      mapCanvas.id = "mapcanvas";
+      const mapContext = mapCanvas.getContext("2d");
+
+      // 将场景投影到2D平面上
+      function renderMap() {
+        // mapContext.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
+
+        const imageData = renderer.domElement.toDataURL();
+        const mapImage = new Image();
+        mapImage.onload = function () {
+          mapContext.drawImage(mapImage, 0, 0, mapCanvas.width, mapCanvas.height);
+        };
+        mapImage.src = imageData;
+      }
+
+      // 渲染循环
+      function animate() {
+        requestAnimationFrame(animate);
+        mesh.rotation.x += 0.01;
+        mesh.rotation.y += 0.02;
+
+        renderer.render(scene, camera);
+
+        renderMap();
+      }
+      animate();
+
+      // 将2D平面添加到DOM中
+      document.body.appendChild(mapCanvas);
+    </script>
+  </body>
+</html>

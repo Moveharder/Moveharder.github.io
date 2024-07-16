@@ -1,0 +1,1 @@
+import{a1 as o}from"./vendor.d2781f4b.js";const t={animate:({camera:t,controls:a,newCameraPosition:n,newControlsTarget:r,cameraLookAt:e,duration:i=2,cb:s})=>{t&&o.to(t.position,{duration:i,x:n.x,y:n.y,z:n.z,onUpdate:()=>{e&&t.lookAt(e.x,e.y,e.z)},onComplete:()=>{s&&s()}}),a&&o.to(a.target,{duration:i,x:r.x,y:r.y,z:r.z})}};export{t as C};

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>小地图示例</title>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+      }
+      #minimap {
+        position: absolute;
+        right: 0;
+        top: 0;
+        z-index: 1;
+        border: solid 2px red;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="./threejs.js"></script>
+    <script src="./OrbitControls.js"></script>
+    <script>
+      // 创建主渲染器
+      const renderer = new THREE.WebGLRenderer();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+
+      // 创建主相机
+      var camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        1,
+        1000
+      );
+      camera.position.set(0, 100, 200); // 设置相机位置
+
+      const controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.update();
+
+      // 创建小地图相机
+      var mapCamera = new THREE.OrthographicCamera(
+        -100,
+        100,
+        100,
+        -100,
+        1,
+        1000
+      );
+      mapCamera.position.set(0, 100, 0); // 设置相机位置
+      mapCamera.lookAt(new THREE.Vector3(0, 0, 0)); // 设置相机朝向
+
+      // 创建场景
+      var scene = new THREE.Scene();
+
+      // 创建小地图画布和渲染器
+      var mapCanvas = document.createElement("canvas");
+      mapCanvas.width = 200;
+      mapCanvas.height = 200;
+      var mapContext = mapCanvas.getContext("2d");
+      var mapTexture = new THREE.CanvasTexture(mapCanvas);
+      var mapMaterial = new THREE.MeshBasicMaterial({ map: mapTexture });
+      var mapGeometry = new THREE.PlaneGeometry(200, 200);
+      var mapMesh = new THREE.Mesh(mapGeometry, mapMaterial);
+      mapMesh.position.set(0, 150, -200); // 设置小地图位置
+      scene.add(mapMesh);
+      var mapRenderer = new THREE.WebGLRenderer({ alpha: true });
+      mapRenderer.setClearColor(0x000000, 0); // 设置背景色为透明
+      mapRenderer.setSize(200, 200);
+
+      // 将小地图画布添加到DOM中
+      var mapContainer = document.createElement("div");
+      mapContainer.id = "minimap";
+      mapContainer.style.position = "absolute";
+      mapContainer.style.top = "10px";
+      mapContainer.style.right = "10px";
+      mapContainer.appendChild(mapRenderer.domElement);
+      document.body.appendChild(mapContainer);
+
+      // 创建玩家实体
+      var playerGeometry = new THREE.BoxGeometry(10, 10, 10);
+      var playerMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+      var playerMesh = new THREE.Mesh(playerGeometry, playerMaterial);
+      playerMesh.position.set(0, 10, 0); // 设置玩家位置
+      scene.add(playerMesh);
+
+      let isUp = false,
+        isDown = false,
+        isLeft = false,
+        isRight = false,
+        isJump = false;
+
+      // 键盘事件
+      window.addEventListener("keydown", (e) => {
+        switch (e.code) {
+          case "KeyW":
+            console.log("前进");
+            isUp = true;
+            break;
+          case "KeyS":
+            console.log("后退");
+            isDown = true;
+            break;
+          case "KeyA":
+            console.log("左移");
+            isLeft = true;
+            break;
+          case "KeyD":
+            console.log("右移");
+            isRight = true;
+            break;
+        }
+      });
+
+      window.addEventListener("keyup", (e) => {
+        switch (e.code) {
+          case "KeyW":
+            console.log("前进");
+            isUp = false;
+            break;
+          case "KeyS":
+            console.log("后退");
+            isDown = false;
+            break;
+          case "KeyA":
+            console.log("左移");
+            isLeft = false;
+            break;
+          case "KeyD":
+            console.log("右移");
+            isRight = false;
+            break;
+        }
+      });
+
+      const objMove = () => {
+        if (isUp) {
+          playerMesh.translateZ(-0.1); //不用.position.z，无法模拟真实效果
+        }
+        if (isDown) {
+          playerMesh.translateZ(+0.1);
+        }
+        if (isLeft) {
+          playerMesh.rotateY(THREE.MathUtils.degToRad(2)); //不用.position.y，无法模拟真实效果
+        }
+        if (isRight) {
+          playerMesh.rotateY(-THREE.MathUtils.degToRad(2));
+        }
+      };
+
+      // 渲染函数
+      function render() {
+        requestAnimationFrame(render);
+
+        controls && controls.update();
+
+        // 更新玩家实体位置和朝向
+        // 这里假设玩家向右移动了10个单位，朝向为正x轴方向
+        // playerMesh.position.x += 10;
+        // playerMesh.rotation.y = Math.PI / 2;
+        objMove();
+
+        // 渲染主场景和小地图场景
+        renderer.render(scene, camera);
+        mapRenderer.render(scene, mapCamera);
+      }
+      render();
+    </script>
+  </body>
+</html>
